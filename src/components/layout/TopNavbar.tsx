@@ -2,19 +2,20 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
-  Database,
   ChevronDown,
   LogOut,
-  Users,
   ShieldCheck,
   Wrench,
   User as UserIcon,
   PanelLeft,
   RefreshCw,
-  FileSpreadsheet,
+  Edit2,
+  X,
+  Check,
 } from 'lucide-react';
 import { googleSheetsAdapter } from '../../services/googleSheetsAdapter';
 import { ticketService } from '../../services/ticketService';
+import { masterDataService } from '../../services/masterDataService';
 import { useNotification } from '../../context/NotificationContext';
 
 interface TopNavbarProps {
@@ -33,10 +34,40 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   const notification = useNotification();
   const [isSyncing, setIsSyncing] = useState(false);
   const isSheetConnected = googleSheetsAdapter.isConnected();
-  const { currentUser, users, loginAsDemoUser, logout } = useAuth();
+  const { currentUser, logout, updateUser, refreshUsers } = useAuth();
   const navigate = useNavigate();
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  // Edit own profile modal state
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [profileCompany, setProfileCompany] = useState('');
+  const [profilePassword, setProfilePassword] = useState('');
+  const companies = masterDataService.getCompanies();
+
+  const handleOpenEditProfile = () => {
+    setShowProfileMenu(false);
+    setProfileName(currentUser?.name || '');
+    setProfileCompany(currentUser?.company || companies[0] || 'PMMPL');
+    setProfilePassword(currentUser?.password || '');
+    setShowEditProfileModal(true);
+  };
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    if (!profileName.trim()) {
+      notification.warning('Validation Error', 'Please enter your name.');
+      return;
+    }
+    updateUser(currentUser.id, {
+      name: profileName.trim(),
+      company: profileCompany.trim(),
+      password: profilePassword.trim() || undefined,
+    });
+    setShowEditProfileModal(false);
+    notification.success('Profile Updated', `Your name has been updated to "${profileName.trim()}".`);
+  };
 
   const handleLogout = () => {
     logout();
@@ -69,24 +100,36 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     }
   };
 
-  const handleSyncSheet = async () => {
+  const handleSyncAll = async () => {
     if (!isSheetConnected) {
-      notification.info('Connect Google Sheet', 'Please configure your Google Apps Script URL in Master Settings.');
-      navigate('/master-settings');
+      notification.warning('Google Sheet Not Connected', 'Please verify Google Apps Script URL configuration.');
       return;
     }
 
     setIsSyncing(true);
     try {
-      const result = await ticketService.syncFromSheet();
-      if (result.success) {
-        notification.success('Sheet Synced', result.message);
-        onSyncComplete?.();
-      } else {
-        notification.warning('Sync Notice', result.message);
+      // 1. Sync FMS Tickets
+      const ticketResult = await ticketService.syncFromSheet();
+
+      // 2. Sync Master Sheet Users
+      let userCount = 0;
+      const userRes = await googleSheetsAdapter.fetchUsersFromSheet();
+      if (userRes.success && userRes.users && userRes.users.length > 0) {
+        masterDataService.syncUsersFromSheet(userRes.users);
+        refreshUsers();
+        userCount = userRes.users.length;
       }
+
+      notification.success(
+        'Google Sheet Synced',
+        `FMS tickets synced (${ticketResult.count || 0}) and Master users synced (${userCount || 0}).`
+      );
+
+      // Trigger re-render across listening pages
+      window.dispatchEvent(new CustomEvent('tech_fms_synced'));
+      onSyncComplete?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to sync with Sheet';
+      const msg = err instanceof Error ? err.message : 'Failed to sync with Google Sheet';
       notification.error('Sync Error', msg);
     } finally {
       setIsSyncing(false);
@@ -111,132 +154,25 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       </div>
 
       <div className="topbar-right">
-        {/* Google Sheet Sync Pill / Button */}
+        {/* Unified Sync Now Button */}
         <button
           type="button"
-          onClick={handleSyncSheet}
+          onClick={handleSyncAll}
           disabled={isSyncing}
-          className={`demo-status-pill ${isSheetConnected ? 'sheet-connected' : ''}`}
+          className="btn btn-primary btn-sm"
           style={{
-            cursor: 'pointer',
-            border: isSheetConnected ? '1px solid #BBF7D0' : '1px solid var(--border)',
-            background: isSheetConnected ? '#F0FDF4' : '#FEF3C7',
-            color: isSheetConnected ? '#15803D' : '#92400E',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '4px 10px',
-            borderRadius: '20px',
-            fontSize: '11.5px',
+            padding: '6px 14px',
+            fontSize: '12.5px',
             fontWeight: 600,
           }}
-          title={isSheetConnected ? 'Click to sync changes with Google Sheet FMS' : 'Click to connect Google Sheet'}
+          title="Sync all tickets and master users from Google Sheet"
         >
-          {isSyncing ? (
-            <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} />
-          ) : isSheetConnected ? (
-            <FileSpreadsheet size={13} color="#16a34a" />
-          ) : (
-            <Database size={13} />
-          )}
-          <span>
-            {isSyncing ? 'Syncing...' : isSheetConnected ? 'Sheet: FMS (Sync Now)' : 'Connect Sheet'}
-          </span>
+          <RefreshCw size={14} className={isSyncing ? 'spin' : ''} />
+          <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
         </button>
-
-        {/* Quick Demo Role Switcher */}
-        <div style={{ position: 'relative' }}>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            onClick={() => {
-              setShowRoleMenu(!showRoleMenu);
-              setShowProfileMenu(false);
-            }}
-            aria-label="Switch Demo User / Role"
-          >
-            <Users size={14} color="var(--primary)" />
-            <span>Switch Role</span>
-            <ChevronDown size={13} />
-          </button>
-
-          {showRoleMenu && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                marginTop: '6px',
-                background: '#FFFFFF',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-lg)',
-                minWidth: '240px',
-                zIndex: 60,
-                padding: '6px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: 'var(--text-secondary)',
-                  padding: '6px 10px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Select Demo Role
-              </div>
-
-              {users.map(u => (
-                <div
-                  key={u.id}
-                  onClick={() => {
-                    loginAsDemoUser(u.id);
-                    setShowRoleMenu(false);
-                  }}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer',
-                    background: currentUser?.id === u.id ? 'var(--primary-light)' : 'transparent',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => {
-                    if (currentUser?.id !== u.id) {
-                      e.currentTarget.style.background = '#F8FAFC';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (currentUser?.id !== u.id) {
-                      e.currentTarget.style.background = 'transparent';
-                    }
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
-                      {u.name}
-                    </span>
-                    {getRoleBadge(u.role)}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                    {u.company} • {u.email}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Profile & Current User Menu */}
         <div style={{ position: 'relative' }}>
@@ -245,7 +181,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             className="user-profile-btn"
             onClick={() => {
               setShowProfileMenu(!showProfileMenu);
-              setShowRoleMenu(false);
             }}
             aria-label="User profile menu"
           >
@@ -286,10 +221,37 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               >
                 <div style={{ fontSize: '13px', fontWeight: 600 }}>{currentUser?.name}</div>
                 <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                  {currentUser?.email}
+                  {currentUser?.company || 'Organization'}
                 </div>
                 <div style={{ marginTop: '4px' }}>{getRoleBadge(currentUser?.role)}</div>
               </div>
+
+              {/* Edit Profile / Name Option */}
+              <button
+                type="button"
+                onClick={handleOpenEditProfile}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  border: 'none',
+                  background: 'none',
+                  color: 'var(--text-main)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  borderRadius: 'var(--radius-md)',
+                  textAlign: 'left',
+                  marginBottom: '2px',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#F1F5F9')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              >
+                <Edit2 size={14} color="var(--primary)" />
+                <span>Edit Profile / Name</span>
+              </button>
 
               <button
                 type="button"
@@ -319,6 +281,153 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           )}
         </div>
       </div>
+
+      {/* EDIT CURRENT USER PROFILE MODAL */}
+      {showEditProfileModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '16px',
+          }}
+          onClick={e => {
+            if (e.target === e.currentTarget) setShowEditProfileModal(false);
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              width: '100%',
+              maxWidth: '440px',
+              background: '#FFFFFF',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08)',
+              padding: '24px',
+              position: 'relative',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    background: 'var(--primary-light)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--primary)',
+                  }}
+                >
+                  <Edit2 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>
+                    Edit My Profile
+                  </h3>
+                  <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                    Update your display name and profile details
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditProfileModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '6px',
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: '12.5px', marginBottom: '4px', display: 'block' }}>
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profileName}
+                    onChange={e => setProfileName(e.target.value)}
+                    placeholder="Enter your full name"
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: '12.5px', marginBottom: '4px', display: 'block' }}>
+                    Company / Organization
+                  </label>
+                  <select
+                    className="form-select"
+                    value={profileCompany}
+                    onChange={e => setProfileCompany(e.target.value)}
+                  >
+                    {companies.map(c => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontWeight: 600, fontSize: '12.5px', marginBottom: '4px', display: 'block' }}>
+                    Password
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profilePassword}
+                    onChange={e => setProfilePassword(e.target.value)}
+                    placeholder="Enter new password"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '22px' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowEditProfileModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Check size={14} />
+                  <span>Update Profile</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

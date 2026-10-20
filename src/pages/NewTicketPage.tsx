@@ -220,7 +220,7 @@ export const NewTicketPage: React.FC = () => {
           </div>
           <p style={{ fontSize: '13px', color: '#047857', maxWidth: '520px', margin: '0 auto 24px' }}>
             Your ticket has been assigned to <strong>{createdTicket.currentlyAssignedToName}</strong> under 
-            round-robin balancing with SLA planned for{' '}
+            round-robin balancing with target date planned for{' '}
             <strong>{new Date(createdTicket.plannedDate).toLocaleDateString()}</strong>.
           </p>
 

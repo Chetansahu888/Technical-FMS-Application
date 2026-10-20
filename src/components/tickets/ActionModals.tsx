@@ -45,7 +45,7 @@ export const HoldModal: React.FC<HoldModalProps> = ({ ticket, isOpen, onClose, o
           <div className="modal-body">
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
               Holding a ticket pauses active work until dependencies, credentials, or user inputs are received.
-              <strong> Note: Planned SLA date will not be automatically extended.</strong>
+              <strong> Note: Planned date will not be automatically extended.</strong>
             </p>
 
             <label
@@ -195,7 +195,7 @@ export const CompleteModal: React.FC<CompleteModalProps> = ({ ticket, isOpen, on
                 </h4>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
                   Are you sure you want to mark <strong>{ticket.ticketNumber}</strong> as completed?
-                  This will record your name as the resolver and calculate final delay/on-time SLA.
+                  This will record your name as the resolver and calculate final delay performance.
                 </p>
                 <div
                   style={{
@@ -306,7 +306,7 @@ export const ReassignModal: React.FC<ReassignModalProps> = ({ ticket, isOpen, on
               >
                 {itPersons.map((person: User) => (
                   <option key={person.id} value={person.id}>
-                    {person.name} ({person.email})
+                    {person.name} ({person.company || 'IT Specialist'})
                   </option>
                 ))}
               </select>

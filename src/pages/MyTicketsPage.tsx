@@ -47,7 +47,7 @@ export const MyTicketsPage: React.FC = () => {
       <div className="page-header">
         <div className="page-header-info">
           <h1>My Submitted Tickets</h1>
-          <p>Track the live status, planned SLAs, assigned IT specialists, and technical fixes for issues you raised.</p>
+          <p>Track the live status, planned timeline, assigned IT specialists, and technical fixes for issues you raised.</p>
         </div>
 
         <div className="page-actions">

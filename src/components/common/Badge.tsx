@@ -35,7 +35,7 @@ export const DelayBadge: React.FC<DelayBadgeProps> = ({ plannedDate, actualDate,
   if (status === 'Completed') {
     if (info.isOverdue) {
       return (
-        <span className="overdue-tag" title="Resolved after planned SLA">
+        <span className="overdue-tag" title="Resolved after planned date">
           <AlertTriangle size={12} />
           <span>Delayed by {info.delayFormatted}</span>
         </span>

@@ -93,7 +93,7 @@ export const AllTicketsPage: React.FC = () => {
             <option value="In Progress">In Progress</option>
             <option value="Hold">On Hold</option>
             <option value="Completed">Completed</option>
-            <option value="Overdue">Overdue SLA</option>
+            <option value="Overdue">Overdue</option>
           </select>
         </div>
 

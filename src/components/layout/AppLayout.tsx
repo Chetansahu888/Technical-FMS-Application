@@ -55,13 +55,15 @@ export const AppLayout: React.FC = () => {
     // Auto-poll every 15 seconds
     const interval = setInterval(runBackgroundSync, 15000);
 
-    // Sync when user switches back to this browser tab
+    // Sync when user switches back to this browser tab or triggers manual sync
     window.addEventListener('focus', runBackgroundSync);
+    window.addEventListener('tech_fms_synced', refreshData);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
       window.removeEventListener('focus', runBackgroundSync);
+      window.removeEventListener('tech_fms_synced', refreshData);
     };
   }, []);
 
@@ -72,7 +74,7 @@ export const AppLayout: React.FC = () => {
   const getPageTitle = (path: string): string => {
     switch (path) {
       case '/dashboard':
-        return 'Dashboard Overview';
+        return 'Dashboard';
       case '/new-ticket':
         return 'Raise New Ticket';
       case '/my-tickets':

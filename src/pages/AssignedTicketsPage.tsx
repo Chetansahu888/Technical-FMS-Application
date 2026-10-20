@@ -96,7 +96,7 @@ export const AssignedTicketsPage: React.FC = () => {
         <div className="page-header-info">
           <h1>Assigned Tickets Workbench</h1>
           <p>
-            IT Resolution Workspace — View technical tickets assigned for troubleshooting, initiate work, record hold reasons, or complete with solution remarks.
+            View technical tickets assigned for troubleshooting, initiate work, record hold reasons, or complete with solution remarks.
           </p>
         </div>
       </div>
@@ -172,7 +172,7 @@ export const AssignedTicketsPage: React.FC = () => {
             cursor: 'pointer',
             borderColor: stats.overdue > 0 ? '#FECDD3' : 'var(--border)',
           }}
-          title="Click to filter by Overdue SLA"
+          title="Click to filter by Overdue"
         >
           <div className="stat-card-header">
             <span style={{ color: '#BE123C', fontWeight: 600 }}>Overdue</span>
@@ -182,7 +182,7 @@ export const AssignedTicketsPage: React.FC = () => {
             {stats.overdue}
           </div>
           <div className="stat-card-sub" style={{ color: '#BE123C' }}>
-            Past SLA deadline
+            Past target deadline
           </div>
         </div>
 
@@ -256,7 +256,7 @@ export const AssignedTicketsPage: React.FC = () => {
             <option value="In Progress">In Progress</option>
             <option value="Hold">On Hold</option>
             <option value="Completed">Completed</option>
-            <option value="Overdue">Overdue SLA</option>
+            <option value="Overdue">Overdue</option>
           </select>
         </div>
 

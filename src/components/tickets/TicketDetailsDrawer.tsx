@@ -322,7 +322,7 @@ export const TicketDetailsDrawer: React.FC<TicketDetailsDrawerProps> = ({
                 </div>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Planned Date (SLA IST)</span>
+                <span className="detail-label">Planned Date (IST)</span>
                 <div
                   className="detail-value"
                   style={{ display: 'flex', alignItems: 'center', gap: '6px' }}

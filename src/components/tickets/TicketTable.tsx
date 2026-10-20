@@ -103,7 +103,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({
             {showAssigneeColumn && (
               <th style={{ whiteSpace: 'nowrap', minWidth: '100px' }}>Assigned To</th>
             )}
-            <th style={{ whiteSpace: 'nowrap', minWidth: '130px' }}>Planned SLA</th>
+            <th style={{ whiteSpace: 'nowrap', minWidth: '130px' }}>Planned Date</th>
             <th style={{ whiteSpace: 'nowrap', minWidth: '85px' }}>Status</th>
             <th style={{ whiteSpace: 'nowrap', minWidth: '120px' }}>Overdue / Remaining</th>
             <th style={{ textAlign: 'right', whiteSpace: 'nowrap', minWidth: '75px' }}>Action</th>

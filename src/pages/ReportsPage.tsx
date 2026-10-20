@@ -150,7 +150,7 @@ export const ReportsPage: React.FC = () => {
           <div className="stat-card-value" style={{ color: '#059669' }}>
             {metrics.completedTotal}
           </div>
-          <div className="stat-card-sub">{metrics.onTimeRate}% on-time SLA</div>
+          <div className="stat-card-sub">{metrics.onTimeRate}% on-time rate</div>
         </div>
 
         <div className="stat-card">
@@ -160,7 +160,7 @@ export const ReportsPage: React.FC = () => {
           <div className="stat-card-value" style={{ color: '#059669' }}>
             {metrics.completedOnTime}
           </div>
-          <div className="stat-card-sub">Met business day SLA</div>
+          <div className="stat-card-sub">Met target timeline</div>
         </div>
 
         <div className="stat-card">
@@ -170,7 +170,7 @@ export const ReportsPage: React.FC = () => {
           <div className="stat-card-value" style={{ color: '#DC2626' }}>
             {metrics.completedDelayed}
           </div>
-          <div className="stat-card-sub">Breached SLA before done</div>
+          <div className="stat-card-sub">Completed past deadline</div>
         </div>
 
         <div className="stat-card">
@@ -215,7 +215,7 @@ export const ReportsPage: React.FC = () => {
               }}
             >
               <option value="requestDate">Request Date</option>
-              <option value="plannedDate">Planned SLA Date</option>
+              <option value="plannedDate">Planned Date</option>
               <option value="actualDate">Actual Resolved Date</option>
             </select>
           </div>
@@ -324,7 +324,7 @@ export const ReportsPage: React.FC = () => {
               <option value="In Progress">In Progress</option>
               <option value="Hold">On Hold</option>
               <option value="Completed">Completed</option>
-              <option value="Overdue">Overdue SLA</option>
+              <option value="Overdue">Overdue</option>
             </select>
           </div>
         </div>

@@ -12,7 +12,36 @@ class MasterDataService {
     try {
       const stored = localStorage.getItem(USERS_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        let parsed: User[] = JSON.parse(stored);
+        let changed = false;
+
+        // Remove Suresh Verma
+        if (parsed.some(u => u.name.toLowerCase() === 'suresh verma')) {
+          parsed = parsed.filter(u => u.name.toLowerCase() !== 'suresh verma');
+          changed = true;
+        }
+
+        // Ensure Admin exists
+        if (!parsed.some(u => u.name.toLowerCase() === 'admin')) {
+          const adminUser = INITIAL_USERS.find(u => u.name.toLowerCase() === 'admin');
+          if (adminUser) {
+            parsed.unshift(adminUser);
+            changed = true;
+          }
+        }
+
+        // Remove any legacy email from all users
+        for (const u of parsed) {
+          if ('email' in u) {
+            delete u.email;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          localStorage.setItem(USERS_KEY, JSON.stringify(parsed));
+        }
+        return parsed;
       }
     } catch {
       // fallback
@@ -26,6 +55,52 @@ class MasterDataService {
    */
   saveUsers(users: User[]): void {
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+
+  /**
+   * Sync and merge users fetched from Google Sheet's Master tab
+   */
+  syncUsersFromSheet(
+    sheetUsers: Array<{ username: string; password?: string; role?: string; company?: string }>
+  ): User[] {
+    const existing = this.getUsers();
+    const updated = [...existing];
+
+    for (const su of sheetUsers) {
+      if (!su.username || !su.username.trim()) continue;
+      const cleanName = su.username.trim();
+      const existingUser = updated.find(u => u.name.toLowerCase() === cleanName.toLowerCase());
+
+      const rawRole = (su.role || 'employee').toLowerCase();
+      let role: 'admin' | 'it_person' | 'employee' = 'employee';
+      if (rawRole.includes('admin')) {
+        role = 'admin';
+      } else if (rawRole.includes('it') || rawRole.includes('specialist') || rawRole.includes('staff')) {
+        role = 'it_person';
+      }
+
+      const comp = su.company ? su.company.trim() : 'PMMPL';
+
+      if (existingUser) {
+        if (su.password) existingUser.password = su.password.trim();
+        existingUser.role = role;
+        existingUser.company = comp;
+        existingUser.active = true;
+        delete existingUser.email;
+      } else {
+        updated.push({
+          id: `usr_${role}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+          name: cleanName,
+          password: su.password?.trim() || 'password123',
+          role: role,
+          company: comp,
+          active: true,
+        });
+      }
+    }
+
+    this.saveUsers(updated);
+    return updated;
   }
 
   /**

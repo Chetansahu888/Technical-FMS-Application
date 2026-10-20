@@ -55,7 +55,7 @@ export const DashboardPage: React.FC = () => {
     return allTickets.filter(
       t =>
         t.requesterId === currentUser?.id ||
-        (currentUser?.email && t.requesterEmail?.toLowerCase() === currentUser.email.toLowerCase())
+        (currentUser?.name && t.requesterName?.toLowerCase() === currentUser.name.toLowerCase())
     );
   }, [allTickets, isAdmin, isIT, currentUser]);
 
@@ -227,7 +227,7 @@ export const DashboardPage: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <h1>
               {isAdmin
-                ? 'Dashboard & Operational Overview'
+                ? 'Dashboard'
                 : `My Dashboard (${currentUser?.name})`}
             </h1>
             {isAdmin && (
@@ -464,7 +464,7 @@ export const DashboardPage: React.FC = () => {
           className={`stat-card ${statusFilter === 'Overdue' ? 'active-filter' : ''}`}
           onClick={() => handleCardClick('Overdue')}
           style={{ borderColor: stats.overdue > 0 ? '#FECDD3' : 'var(--border)' }}
-          title="Overdue flag: Tickets past SLA planned date"
+          title="Overdue flag: Tickets past planned date"
         >
           <div className="stat-card-header">
             <span style={{ color: '#BE123C', fontWeight: 600 }}>Overdue (Flag)</span>
@@ -474,7 +474,7 @@ export const DashboardPage: React.FC = () => {
             {stats.overdue}
           </div>
           <div className="stat-card-sub" style={{ color: '#BE123C' }}>
-            SLA breached
+            Past planned date
           </div>
         </div>
 
@@ -556,7 +556,7 @@ export const DashboardPage: React.FC = () => {
                         <div>
                           <strong>{userItem.name}</strong>
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                            {userItem.email}
+                            {userItem.company}
                           </div>
                         </div>
                       </div>
@@ -641,7 +641,7 @@ export const DashboardPage: React.FC = () => {
               <span>Urgent Attention Required: Overdue Tickets ({overdueTickets.length})</span>
             </div>
             <span style={{ fontSize: '12px', fontWeight: 500 }}>
-              Planned SLA has elapsed without completion
+              Planned date has elapsed without completion
             </span>
           </div>
 

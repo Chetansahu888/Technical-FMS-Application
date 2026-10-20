@@ -1,19 +1,19 @@
 import { User, Ticket, MasterSettings } from '../types';
 
 export const INITIAL_USERS: User[] = [
+  // Admin from Google Sheet
   {
-    id: 'usr_admin_1',
-    name: 'Suresh Verma',
-    email: 'suresh.verma@company.com',
-    password: 'admin@123',
+    id: 'usr_admin',
+    name: 'Admin',
+    password: 'Admin123',
     role: 'admin',
-    company: 'PMMPL',
+    company: 'All',
     active: true,
   },
+  // IT Specialists for ticket handling
   {
     id: 'usr_it_bhupendra',
     name: 'Bhupendra',
-    email: 'bhupendra.it@company.com',
     password: 'it@123',
     role: 'it_person',
     company: 'PMMPL',
@@ -22,37 +22,9 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'usr_it_alauddin',
     name: 'Md Alauddin',
-    email: 'alauddin.it@company.com',
     password: 'it@123',
     role: 'it_person',
     company: 'PMMPL',
-    active: true,
-  },
-  {
-    id: 'usr_emp_rahul',
-    name: 'Rahul Sharma',
-    email: 'rahul.sharma@pmmpl.com',
-    password: 'emp@123',
-    role: 'employee',
-    company: 'PMMPL',
-    active: true,
-  },
-  {
-    id: 'usr_emp_priya',
-    name: 'Priya Patel',
-    email: 'priya.patel@purab.com',
-    password: 'emp@123',
-    role: 'employee',
-    company: 'Purab',
-    active: true,
-  },
-  {
-    id: 'usr_emp_amit',
-    name: 'Amit Gupta',
-    email: 'amit.gupta@rkl.com',
-    password: 'emp@123',
-    role: 'employee',
-    company: 'RKL',
     active: true,
   },
 ];

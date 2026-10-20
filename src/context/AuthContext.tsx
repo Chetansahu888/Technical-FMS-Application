@@ -10,6 +10,7 @@ interface AuthContextType {
   loginAsDemoUser: (userId: string) => void;
   logout: () => void;
   refreshUsers: () => void;
+  updateUser: (id: string, updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,6 +21,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUsers = () => {
     setUsers(masterDataService.getUsers());
+  };
+
+  const updateUser = (id: string, updates: Partial<User>) => {
+    const updatedUsers = masterDataService.updateUser(id, updates);
+    setUsers(updatedUsers);
+    if (currentUser?.id === id) {
+      const updatedCurrent = { ...currentUser, ...updates };
+      authService.setCurrentUser(updatedCurrent);
+      setCurrentUser(updatedCurrent);
+    }
   };
 
   const login = async (email: string, password?: string) => {
@@ -44,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, users, login, loginAsDemoUser, logout, refreshUsers }}>
+    <AuthContext.Provider value={{ currentUser, users, login, loginAsDemoUser, logout, refreshUsers, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

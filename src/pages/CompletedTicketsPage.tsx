@@ -41,7 +41,7 @@ export const CompletedTicketsPage: React.FC = () => {
         <div className="page-header-info">
           <h1>Completed Tickets Archive</h1>
           <p>
-            Historical record of resolved technical issues, solution remarks, resolver audit and SLA delay performance.
+            Historical record of resolved technical issues, solution remarks, resolver audit, and delay performance.
           </p>
         </div>
       </div>
@@ -115,7 +115,7 @@ export const CompletedTicketsPage: React.FC = () => {
                 <th style={{ whiteSpace: 'nowrap', minWidth: '85px' }}>Company</th>
                 <th style={{ whiteSpace: 'nowrap', minWidth: '150px' }}>Application & Requester</th>
                 <th style={{ whiteSpace: 'nowrap', minWidth: '140px' }}>Assigned & Resolver</th>
-                <th style={{ whiteSpace: 'nowrap', minWidth: '150px' }}>Planned SLA</th>
+                <th style={{ whiteSpace: 'nowrap', minWidth: '150px' }}>Planned Date</th>
                 <th style={{ whiteSpace: 'nowrap', minWidth: '150px' }}>Actual Resolved</th>
                 <th style={{ whiteSpace: 'nowrap', minWidth: '140px' }}>Delay Performance</th>
                 <th style={{ minWidth: '220px', maxWidth: '320px' }}>Solution Remarks</th>

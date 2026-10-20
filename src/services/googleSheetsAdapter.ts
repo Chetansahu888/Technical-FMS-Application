@@ -180,6 +180,54 @@ class GoogleSheetsAdapter {
   }
 
   /**
+   * Fetch all users from Google Sheet's "Master" tab
+   */
+  async fetchUsersFromSheet(): Promise<{
+    success: boolean;
+    users: Array<{ username: string; password?: string; role?: string; company?: string }>;
+    message?: string;
+  }> {
+    const endpoint = this.getEndpointUrl();
+    if (!endpoint) {
+      return { success: false, users: [], message: 'Apps Script URL not configured' };
+    }
+
+    try {
+      const urlWithParam = endpoint.includes('?') 
+        ? `${endpoint}&action=GET_USERS&sheetName=Master&t=${Date.now()}`
+        : `${endpoint}?action=GET_USERS&sheetName=Master&t=${Date.now()}`;
+
+      const response = await fetch(urlWithParam, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result && result.success && Array.isArray(result.users)) {
+        return {
+          success: true,
+          users: result.users,
+          message: `Fetched ${result.users.length} users from Master sheet`,
+        };
+      } else {
+        throw new Error(result?.error || 'Invalid users response');
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Fetch users failed';
+      console.warn('Failed to fetch users from Google Sheets:', errorMsg);
+      return {
+        success: false,
+        users: [],
+        message: errorMsg,
+      };
+    }
+  }
+
+  /**
    * Sync all existing React tickets to Google Sheet in bulk
    */
   async syncAllTicketsToSheet(tickets: Ticket[]): Promise<SyncResult> {
@@ -316,13 +364,18 @@ function doPost(e) {
       return handleDeleteTicket(data.ticketNumber, data.sheetName || SHEET_NAME);
     }
 
+    // 5. Read Users from Master Sheet
+    if (action === "GET_USERS") {
+      return handleGetUsers(data.sheetName || "Master");
+    }
+
     return jsonResponse({ success: false, error: "Unknown action: " + action });
   } catch (error) {
     return jsonResponse({ success: false, error: error.toString() });
   }
 }
 
-// --- HTTP GET HANDLER (Read Tickets from Sheet FMS) ---
+// --- HTTP GET HANDLER (Read Tickets & Users from Sheet) ---
 function doGet(e) {
   try {
     const action = (e && e.parameter && e.parameter.action) || "GET_TICKETS";
@@ -330,6 +383,10 @@ function doGet(e) {
 
     if (action === "GET_TICKETS") {
       return handleGetTickets(sheetName);
+    }
+
+    if (action === "GET_USERS") {
+      return handleGetUsers(sheetName || "Master");
     }
 
     return jsonResponse({
@@ -589,6 +646,67 @@ function handleGetTickets(sheetName) {
   }
 
   return jsonResponse({ success: true, tickets: tickets, count: tickets.length });
+}
+
+// Read Users from Master Sheet
+function handleGetUsers(masterSheetName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(masterSheetName || "Master");
+  if (!sheet) {
+    sheet = ss.getSheetByName("master") || ss.getSheetByName("Users");
+  }
+  if (!sheet) {
+    return jsonResponse({ success: false, error: "Master sheet not found" });
+  }
+
+  // Use getDataRange to reliably capture all 300+ rows, including formula results and IMPORTRANGE
+  const values = sheet.getDataRange().getValues();
+  if (!values || values.length <= 1) {
+    return jsonResponse({ success: true, users: [] });
+  }
+
+  const headerRow = values[0];
+
+  let userCol = 0;
+  let passCol = 1;
+  let roleCol = 2;
+  let compCol = 3;
+
+  for (let c = 0; c < headerRow.length; c++) {
+    const h = String(headerRow[c]).toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (h.includes("user") || h.includes("name")) userCol = c;
+    if (h.includes("pass")) passCol = c;
+    if (h.includes("role")) roleCol = c;
+    if (h.includes("comp")) compCol = c;
+  }
+
+  const users = [];
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    const username = String(row[userCol] || "").trim();
+    if (!username) continue;
+
+    const password = String(row[passCol] || "").trim();
+    const rawRole = String(row[roleCol] || "").trim();
+    const company = String(row[compCol] || "").trim() || "PMMPL";
+
+    let role = "employee";
+    const rLower = rawRole.toLowerCase();
+    if (rLower.includes("admin")) {
+      role = "admin";
+    } else if (rLower.includes("it") || rLower.includes("specialist") || rLower.includes("staff")) {
+      role = "it_person";
+    }
+
+    users.push({
+      username: username,
+      password: password,
+      role: role,
+      company: company
+    });
+  }
+
+  return jsonResponse({ success: true, users: users, count: users.length });
 }
 
 // Google Drive File Upload

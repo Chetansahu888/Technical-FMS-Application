@@ -10,16 +10,14 @@ import {
   ListOrdered,
   FileCheck2,
   Settings,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
-  onToggle: () => void;
+  onToggle?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const { currentUser } = useAuth();
   const role = currentUser?.role || 'employee';
 
@@ -135,20 +133,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           </NavLink>
         )}
       </nav>
-
-      {/* Collapse Toggle Footer */}
-      <div className="sidebar-footer">
-        <button
-          type="button"
-          className="toggle-sidebar-btn"
-          onClick={onToggle}
-          title={collapsed ? 'Expand menu' : 'Collapse menu'}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={16} />}
-          {!collapsed && <span>Collapse Menu</span>}
-        </button>
-      </div>
     </aside>
   );
 };
